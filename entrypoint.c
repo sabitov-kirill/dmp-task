@@ -7,7 +7,7 @@
 #include <linux/module.h>
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Ivanov Ivan");
+MODULE_AUTHOR("Sabitov Kirill");
 MODULE_VERSION("0.01");
 
 int dmp_init(void) {
