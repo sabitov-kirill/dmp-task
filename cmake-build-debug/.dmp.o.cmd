@@ -1,0 +1,1 @@
+savedcmd_/home/ne1mnn/code/dmp-task/cmake-build-debug/dmp.o := ld -m elf_x86_64 -z noexecstack --no-warn-rwx-segments   -r -o /home/ne1mnn/code/dmp-task/cmake-build-debug/dmp.o @/home/ne1mnn/code/dmp-task/cmake-build-debug/dmp.mod 
