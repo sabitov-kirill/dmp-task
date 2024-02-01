@@ -5,10 +5,17 @@ cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 # https://gitioc.upc.edu/open-source/xenomai-cmake/blob/master/cmake-modules/FindKernelHeaders.cmake
 # https://stackoverflow.com/questions/50877135/cmake-specify-linux-kernel-module-output-build-directory
 
-project(dmp-task LANGUAGES C CXX)
+project(dmp LANGUAGES C CXX)
+
+#
+# Kernel Module setup
+#
 
 # List driver sources
-set(SOURCES entrypoint.c)
+set(SOURCES
+        src/display_stat.c
+        src/dmp.c
+        src/entrypoint.c)
 
 # We use gnu++17
 set(CMAKE_C_STANDARD 17)
@@ -17,13 +24,13 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Use -DARCH=.. to build against something else than x86
 # Check /usr/src/linux-headers-$(uname -r)/arch for available options
-if(NOT DEFINED ARCH)
+if (NOT DEFINED ARCH)
     set(ARCH x86)
-endif()
+endif ()
 
 # Use -DKERNELHEADERS_DIR=.. to specify headers path
 # By default, we assume you want to build against running kernel
-if(NOT DEFINED KERNELHEADERS_DIR)
+if (NOT DEFINED KERNELHEADERS_DIR)
     # Find the kernel release
     execute_process(
             COMMAND uname -r
@@ -39,18 +46,19 @@ if(NOT DEFINED KERNELHEADERS_DIR)
     )
 
     message(STATUS "Kernel release: ${KERNEL_RELEASE}")
-endif()
+endif ()
 
 message(STATUS "Kernel headers: ${KERNELHEADERS_DIR}")
 
 # Generate Kbuild file for kernel Makefile to build
 string(REPLACE ";" " " SOURCES_LINE "${SOURCES}")
 
-file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/Kbuild
-        "obj-m := ${CMAKE_PROJECT_NAME}.o
+file(
+WRITE ${CMAKE_CURRENT_SOURCE_DIR}/Kbuild
+"obj-m := ${CMAKE_PROJECT_NAME}.o
 ${CMAKE_PROJECT_NAME}-srcs := ${SOURCES_LINE}
-        ${CMAKE_PROJECT_NAME}-y := $(${CMAKE_PROJECT_NAME}-srcs:.c=.o)
-ccflags-y := -std=gnu17 -Wall -Werror -Wno-declaration-after-statement"
+${CMAKE_PROJECT_NAME}-y := $(${CMAKE_PROJECT_NAME}-srcs:.c=.o)
+ccflags-y := -std=gnu17 -Wall -Werror -Wno-declaration-after-statement -msse2"
 )
 
 # The actual kernel build will be made through make call
@@ -63,7 +71,7 @@ add_custom_command(
         DEPENDS ${SOURCES} VERBATIM)
 
 # Add it as a target
-add_custom_target(dmp-task ALL DEPENDS ${DRIVER_FILE})
+add_custom_target(dmp ALL DEPENDS ${DRIVER_FILE})
 
 # Make a fake library from the same sources to enable LSP
 add_library(dummy ${SOURCES})
@@ -84,9 +92,61 @@ target_include_directories(
         ${KERNELHEADERS_DIR}/arch/${ARCH}/include/generated/uapi
 )
 
+#
+# Tests setup
+#
+
+include(CTest)
+
+# Tests use gnu++20
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Fixup for out-of-tree builds
+file(CREATE_LINK ${PROJECT_SOURCE_DIR}/CMakePresets.json ${CMAKE_BINARY_DIR}/CMakePresets.json SYMBOLIC)
+
+include(FetchContent)
+
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+add_executable(dmp_test
+        tests/lib/main.cpp
+        tests/lib/device.cpp
+        tests/lib/dmp_test.cpp
+        tests/stat_test.cpp
+        tests/device_creation_test.cpp
+)
+target_link_libraries(dmp_test PRIVATE GTest::gtest)
+
+# We add build procedure as fixtures to all others
+# Ref: https://crascit.com/2016/10/18/test-fixtures-with-cmake-ctest/
+add_test(
+        NAME build_module
+        COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}"
+        --config "$<CONFIG>" --target dmp
+)
+
+# Unfortunately, test discovery takes place before fixtures are executed, so any
+# attempt to build tests here as well will make things more complicated.
+set_tests_properties(build_module PROPERTIES FIXTURES_SETUP prepare_tests)
+
+include(GoogleTest)
+gtest_discover_tests(dmp_test PROPERTIES RUN_SERIAL TRUE FIXTURES_REQUIRED prepare_tests DISCOVERY_MODE PRE_TEST)
+
+#
+# Target setup
+#
+
 # We exclude our fake and test targets from `make all`
 set_target_properties(
-        dummy
+        dummy dmp_test gtest gmock gtest_main gmock_main
         PROPERTIES
         EXCLUDE_FROM_ALL 1
         EXCLUDE_FROM_DEFAULT_BUILD 1
