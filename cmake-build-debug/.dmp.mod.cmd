@@ -1,1 +1,0 @@
-savedcmd_/home/ne1mnn/code/dmp-task/cmake-build-debug/dmp.mod := printf '%s\n'   src/display_stat.o src/dmp.o src/entrypoint.o | awk '!x[$$0]++ { print("/home/ne1mnn/code/dmp-task/cmake-build-debug/"$$0) }' > /home/ne1mnn/code/dmp-task/cmake-build-debug/dmp.mod

@@ -1,2 +1,0 @@
-/usr/bin/ar qc libdummy.a CMakeFiles/dummy.dir/src/display_stat.c.o CMakeFiles/dummy.dir/src/dmp.c.o CMakeFiles/dummy.dir/src/entrypoint.c.o
-/usr/bin/ranlib libdummy.a

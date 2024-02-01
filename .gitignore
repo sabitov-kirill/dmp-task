@@ -1,4 +1,5 @@
 build/
+cmake*/
 out/
 /Kbuild
 tests/__pycache__/

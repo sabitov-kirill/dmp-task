@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/dmp_test.dir/tests/lib/main.cpp.o CMakeFiles/dmp_test.dir/tests/lib/device.cpp.o CMakeFiles/dmp_test.dir/tests/lib/dmp_test.cpp.o CMakeFiles/dmp_test.dir/tests/stat_test.cpp.o CMakeFiles/dmp_test.dir/tests/device_creation_test.cpp.o -o dmp_test  lib/libgtest.a 

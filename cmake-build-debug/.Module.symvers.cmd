@@ -1,1 +1,0 @@
-savedcmd_/home/ne1mnn/code/dmp-task/cmake-build-debug/Module.symvers :=  scripts/mod/modpost -m -a      -o /home/ne1mnn/code/dmp-task/cmake-build-debug/Module.symvers -T /home/ne1mnn/code/dmp-task/cmake-build-debug/modules.order -i Module.symvers -e 
